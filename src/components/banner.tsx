@@ -30,14 +30,14 @@ export function Banner({ feelsLike, temperature, maxTemp, minTemp, description, 
           <div className="w-full h-auto flex items-center pb-6 text-white flex-col">
             <div className="w-full flex flex-row justify-evenly items-center">
                <div className="flex flex-col items-center justify-center h-full px-5 text-center">
-                <p className="text-white text-lg font-bold">{kelvinToCelsius(temperature)}<br/>Max</p>
+                <p className="text-white text-lg font-bold">{kelvinToCelsius(maxTemp)}<br/>Max</br>
                </div>
                <Icon className="h-40 w-40 animate-float" icon="fluent:weather-partly-cloudy-day-24-filled" />
                <div className="flex flex-col items-center justify-center h-full px-5 text-center">
-                 <p className="text-white text-lg font-bold">{kelvinToCelsius(temperature)}<br/>Min</p>
+                 <p className="text-white text-lg font-bold">{kelvinToCelsius(minTemp)}<br/>Min</br>
                </div>
             </div>
-            <h1 className="text-white text-xl font-medium capitalize">{description} <b className="text-white">|</b> Feels like {kelvinToCelsius(temperature)}</h1>
+            <h1 className="text-white text-xl font-medium capitalize">{description} <b className="text-white">|</b> Feels like {kelvinToCelsius(feelsLike)}</h1>
           </div>
           </div>
         </div>

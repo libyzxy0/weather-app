@@ -6,14 +6,35 @@ import { useState } from 'react'
 import axios from 'axios'
 import {
   useQuery,
-  useMutation,
   useQueryClient
 } from '@tanstack/react-query'
 
-function estimateRainProbability(cloudiness, humidity, windSpeed) {
-    const rainProbability = Math.min((cloudiness >= 50 ? 30 : 0) + (humidity >= 70 ? 20 : 0) + (windSpeed * 3.6 >= 30 ? 10 : 0), 100);
-    return rainProbability;
+
+interface WeatherData {
+  main: {
+    feels_like: number;
+    temp: number;
+    temp_max: number;
+    temp_min: number;
+    humidity: number;
+  };
+  name: string;
+  weather: {
+    description: string;
+  }[];
+  clouds: {
+    all: number;
+  };
+  wind: {
+    speed: number;
+  };
+  visibility: number;
 }
+function estimateRainProbability(cloudiness: number, humidity: number, windSpeed: number): number {
+  const rainProbability = Math.min((cloudiness >= 50 ? 30 : 0) + (humidity >= 70 ? 20 : 0) + (windSpeed * 3.6 >= 30 ? 10 : 0), 100);
+  return rainProbability;
+}
+
 
 
 export default function Main() {
@@ -21,9 +42,16 @@ export default function Main() {
   
   const queryClient = useQueryClient();
   
-  const { isPending, error, data, isFetching, refetch } = useQuery({ queryKey: ['weather'], queryFn: () => axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${"57a49a207949984dc00306efe9038f8f"}`).then(res => res.data)})
+  const { isPending, error, data, isFetching, refetch } = useQuery<WeatherData>({
+    queryKey: ['weather'],
+    queryFn: async () => {
+      const response = await axios.get<WeatherData>(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${"57a49a207949984dc00306efe9038f8f"}`);
+      return response.data;
+    }
+  });
   
-  const kelvinToCelsius = (temp: number) => Math.round(temp - 273.15) + "°C";
+  const kelvinToCelsius = (temp: number): string => `${Math.round(temp - 273.15)}°C`;
+
   return (
     <div className="font-nunito">
       <nav className="w-full bg-white h-14 dark:bg-gray-950 border-b border-gray-100 dark:border-gray-900 flex items-center flex-row justify-between">
