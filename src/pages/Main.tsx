@@ -4,11 +4,7 @@ import { Banner } from '@/components/banner'
 import { InfoCard } from '@/components/info-card'
 import { useState } from 'react'
 import axios from 'axios'
-import {
-  useQuery,
-  useQueryClient
-} from '@tanstack/react-query'
-
+import { useQuery } from '@tanstack/react-query'
 
 interface WeatherData {
   main: {
@@ -30,27 +26,26 @@ interface WeatherData {
   };
   visibility: number;
 }
-function estimateRainProbability(cloudiness: number, humidity: number, windSpeed: number): number {
-  const rainProbability = Math.min((cloudiness >= 50 ? 30 : 0) + (humidity >= 70 ? 20 : 0) + (windSpeed * 3.6 >= 30 ? 10 : 0), 100);
-  return rainProbability;
-}
-
-
 
 export default function Main() {
   const [city, setCity] = useState("Manila");
   
-  const queryClient = useQueryClient();
-  
-  const { isPending, error, data, isFetching, refetch } = useQuery<WeatherData>({
+  const { data, refetch } = useQuery<WeatherData>({
     queryKey: ['weather'],
     queryFn: async () => {
       const response = await axios.get<WeatherData>(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${"57a49a207949984dc00306efe9038f8f"}`);
       return response.data;
     }
   });
-  
+
   const kelvinToCelsius = (temp: number): string => `${Math.round(temp - 273.15)}°C`;
+
+  const estimateRainProbability = (cloudiness: number, humidity: number, windSpeed: number): number => {
+    if (cloudiness === undefined || humidity === undefined || windSpeed === undefined) {
+      return 0; // Or handle it according to your use case
+    }
+    return Math.min((cloudiness >= 50 ? 30 : 0) + (humidity >= 70 ? 20 : 0) + (windSpeed * 3.6 >= 30 ? 10 : 0), 100);
+  };
 
   return (
     <div className="font-nunito">
@@ -65,30 +60,31 @@ export default function Main() {
           <ModeToggle />
         </div>
       </nav>
-       <div className="flex flex-col md:flex-row">
-      {!isPending && (
-        <Banner
-          feelsLike={data.main.feels_like}
-          city={data.name}
-          temperature={data.main.temp}
-          maxTemp={data.main.temp_max}
-          minTemp={data.main.temp_min}
-          description={data.weather[0].description}
-        />
-      )}
-      
-      <div className="w-full flex justify-center items-center mt-5">
-        <div className="w-full mx-5 md:mx-6 rounded-md dark:bg-gray-900 bg-white shadow-md">
-        
-          <InfoCard name="Temperature" n={kelvinToCelsius(data?.main.temp)} ic="uil:temperature-three-quarter" />
-          <InfoCard name="Rain probability" n={estimateRainProbability(data?.clouds.all, data?.main.humidity, data?.wind.speed) + "%"} ic="material-symbols-light:weather-mix-outline-rounded" />
-          <InfoCard name="Wind speed" n={(data?.wind.speed * 3.6).toFixed(2) + "km/h"} ic="fluent:weather-squalls-24-regular" />
-          <InfoCard name="Air Humidity" n={data?.main.humidity + "%"} ic="lets-icons:humidity-light" />
-          <InfoCard name="Visibility" n={data?.visibility + "m"} ic="ic:outline-visibility" />
-          
-        </div>
-      </div>
+      <div className="flex flex-col md:flex-row">
+        {!data ? (
+          <div>Loading...</div>
+        ) : (
+          <>
+            <Banner
+              feelsLike={data.main.feels_like}
+              city={data.name}
+              temperature={data.main.temp}
+              maxTemp={data.main.temp_max}
+              minTemp={data.main.temp_min}
+              description={data.weather[0].description}
+            />
+            <div className="w-full flex justify-center items-center mt-5">
+              <div className="w-full mx-5 md:mx-6 rounded-md dark:bg-gray-900 bg-white shadow-md">
+                <InfoCard name="Temperature" n={kelvinToCelsius(data.main.temp)} ic="uil:temperature-three-quarter" />
+                <InfoCard name="Rain probability" n={`${estimateRainProbability(data.clouds.all, data.main.humidity, data.wind.speed)}%`} ic="material-symbols-light:weather-mix-outline-rounded" />
+                <InfoCard name="Wind speed" n={(data.wind.speed * 3.6)?.toFixed(2) + "km/h"} ic="fluent:weather-squalls-24-regular" />
+                <InfoCard name="Air Humidity" n={`${data.main.humidity}%`} ic="lets-icons:humidity-light" />
+                <InfoCard name="Visibility" n={`${data.visibility}m`} ic="ic:outline-visibility" />
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
-  )
+  );
 }
